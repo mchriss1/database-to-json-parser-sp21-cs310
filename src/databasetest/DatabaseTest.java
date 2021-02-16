@@ -1,35 +1,40 @@
+//Author Martez Christian
 package databasetest;
 
 import java.sql.*;
+import org.json.simple.*;
 
 public class DatabaseTest {
 
     
-    public static void main(String[] args) {
+     public JSONArray getJSONData() {
         
+        JSONArray outputData = new JSONArray();
         Connection conn = null;
         PreparedStatement pstSelect = null, pstUpdate = null;
         ResultSet resultset = null;
         ResultSetMetaData metadata = null;
         
-        String query, key, value;
-        String newFirstName = "Alfred", newLastName = "Neuman";
+        String query; 
+        boolean theResults;
         
-        boolean hasresults;
-        int resultCount, columnCount, updateCount = 0;
+        int resultCount;
+        int colCount;   //column count
+        
+      
         
         try {
             
             /* Identify the Server */
             
-            String server = ("jdbc:mysql://localhost/db_test");
+            String server = ("jdbc:mysql://localhost/p2_test");
             String username = "root";
             String password = "CS488";
             System.out.println("Connecting to " + server + "...");
             
-            /* Load the MySQL JDBC Driver */
+              /* Load the MySQL JDBC Driver */
             
-            Class.forName("com.mysql.jdbc.Driver").newInstance();
+            Class.forName("com.mysql.cj.jdbc.Driver").newInstance();
             
             /* Open Connection */
 
@@ -42,34 +47,6 @@ public class DatabaseTest {
                 /* Connection Open! */
                 
                 System.out.println("Connected Successfully!");
-                
-                // Prepare Update Query
-                
-                query = "INSERT INTO people (firstname, lastname) VALUES (?, ?)";
-                pstUpdate = conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS);
-                pstUpdate.setString(1, newFirstName);
-                pstUpdate.setString(2, newLastName);
-                
-                // Execute Update Query
-                
-                updateCount = pstUpdate.executeUpdate();
-                
-                // Get New Key; Print To Console
-                
-                if (updateCount > 0) {
-            
-                    resultset = pstUpdate.getGeneratedKeys();
-
-                    if (resultset.next()) {
-
-                        System.out.print("Update Successful!  New Key: ");
-                        System.out.println(resultset.getInt(1));
-
-                    }
-
-                }
-                
-                
                 /* Prepare Select Query */
                 
                 query = "SELECT * FROM people";
@@ -79,56 +56,31 @@ public class DatabaseTest {
                 
                 System.out.println("Submitting Query ...");
                 
-                hasresults = pstSelect.execute();                
+                theResults = pstSelect.execute();                
                 
                 /* Get Results */
                 
                 System.out.println("Getting Results ...");
                 
-                while ( hasresults || pstSelect.getUpdateCount() != -1 ) {
+                while ( theResults || pstSelect.getUpdateCount() != -1 ) {
 
-                    if ( hasresults ) {
+                    if ( theResults ) {
                         
                         /* Get ResultSet Metadata */
                         
                         resultset = pstSelect.getResultSet();
                         metadata = resultset.getMetaData();
-                        columnCount = metadata.getColumnCount();
-                        
-                        /* Get Column Names; Print as Table Header */
-                        
-                        for (int i = 1; i <= columnCount; i++) {
-
-                            key = metadata.getColumnLabel(i);
-
-                            System.out.format("%20s", key);
-
-                        }
+                        colCount = metadata.getColumnCount();
                         
                         /* Get Data; Print as Table Rows */
+                        int currentLine = 0;
                         
                         while(resultset.next()) {
-                            
-                            /* Begin Next ResultSet Row */
-
-                            System.out.println();
-                            
-                            /* Loop Through ResultSet Columns; Print Values */
-
-                            for (int i = 1; i <= columnCount; i++) {
-
-                                value = resultset.getString(i);
-
-                                if (resultset.wasNull()) {
-                                    System.out.format("%20s", "NULL");
-                                }
-
-                                else {
-                                    System.out.format("%20s", value);
-                                }
-
+                            JSONObject currentJSONObject = new JSONObject();
+                            for (int i = 2; i <= colCount; i++){
+                                currentJSONObject.put(metadata.getColumnLabel(i), resultset.getString(i));
                             }
-
+                                outputData.add(currentJSONObject);
                         }
                         
                     }
@@ -145,7 +97,7 @@ public class DatabaseTest {
                     
                     /* Check for More Data */
 
-                    hasresults = pstSelect.getMoreResults();
+                    theResults = pstSelect.getMoreResults();
 
                 }
                 
@@ -174,7 +126,8 @@ public class DatabaseTest {
             if (pstUpdate != null) { try { pstUpdate.close(); pstUpdate = null; } catch (Exception e) {} }
             
         }
-        
+
+        return outputData;
     }
     
 }
