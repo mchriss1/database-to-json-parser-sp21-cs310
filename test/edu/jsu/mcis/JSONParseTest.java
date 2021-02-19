@@ -1,8 +1,4 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+//Author Martez Christian
 package edu.jsu.mcis;
 
 import org.junit.*;
@@ -11,7 +7,7 @@ import org.json.simple.*;
 import org.json.simple.parser.*;
 
 import databasetest.*;
-//Author Martez Christian
+
 public class JSONParseTest {
 
     private JSONParser parser;
